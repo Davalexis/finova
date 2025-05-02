@@ -1,4 +1,4 @@
-import 'package:finova/views/dashboard_view/Screen/dashboard_screen.dart';
+import 'package:finova/views/Auth_view/screen/create_acct_screen.dart';
 import 'package:flutter/material.dart';
 
 class OnboardingButton extends StatelessWidget {
@@ -13,7 +13,7 @@ class OnboardingButton extends StatelessWidget {
         elevation: 0,
       ),
       onPressed: () {
-        Navigator.push(context, MaterialPageRoute(builder: (context)=> DashboardScreen()));
+        Navigator.push(context, MaterialPageRoute(builder: (context)=>CreateAcctScreen()));
       },
       child: Text(
         'Get Started',

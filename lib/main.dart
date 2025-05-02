@@ -1,5 +1,4 @@
-import 'package:finova/views/Navigation_view/navigation_screen.dart';
-import 'package:finova/views/dashboard_view/Screen/dashboard_screen.dart';
+
 import 'package:finova/views/onboarding_view/screen/onboarding_screen.dart';
 import 'package:flutter/material.dart';
 
