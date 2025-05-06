@@ -1,8 +1,7 @@
-import 'package:finova/views/Auth_view/screen/Pin_Auth_screen.dart';
+import 'package:finova/views/Auth_view/screen/code_Auth_screen.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
-
 
 class CreateAcctScreen extends StatelessWidget {
   const CreateAcctScreen({super.key});
@@ -10,13 +9,13 @@ class CreateAcctScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             // mainAxisAlignment: MainAxisAlignment.start,
             children: [
-          
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -30,21 +29,20 @@ class CreateAcctScreen extends StatelessWidget {
                       size: 30,
                     ),
                   ),
-        
+
                   IconButton(
-                    onPressed: () {
-                      
-                    },
+                    onPressed: () {},
                     icon: Icon(
-                    IconsaxPlusLinear.arrow_right_3, 
-                    color: Colors.white,
-                    size: 30,),
+                      Icons.headset_mic_rounded,
+                      color: Colors.white,
+                      size: 30,
+                    ),
                   ),
                 ],
               ),
-        
+
               SizedBox(height: 40),
-        
+
               Row(
                 spacing: 10,
                 children: [
@@ -55,9 +53,9 @@ class CreateAcctScreen extends StatelessWidget {
                       CircleAvatar(radius: 18, backgroundColor: Colors.white),
                     ],
                   ),
-        
+
                   Text(
-                    'Planoo',
+                    'Finova',
                     style: TextStyle(
                       fontSize: 20,
                       color: Colors.white,
@@ -66,9 +64,9 @@ class CreateAcctScreen extends StatelessWidget {
                   ),
                 ],
               ),
-        
+
               SizedBox(height: 30),
-        
+
               Padding(
                 padding: const EdgeInsets.only(right: 100),
                 child: Text(
@@ -80,29 +78,28 @@ class CreateAcctScreen extends StatelessWidget {
                   ),
                 ),
               ),
-        
+
               const SizedBox(height: 20),
-        
-        
+
               IntlPhoneField(
                 keyboardType: TextInputType.phone,
                 style: TextStyle(color: Colors.white),
-        
+
                 decoration: InputDecoration(
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(13),
                     borderSide: BorderSide(color: Colors.white),
                   ),
-        
+
                   labelStyle: TextStyle(color: Colors.white),
                   labelText: 'Phone Number',
                   border: OutlineInputBorder(borderSide: BorderSide()),
-        
+
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(13),
                     borderSide: BorderSide(color: Colors.greenAccent),
                   ),
-        
+
                   // border: OutlineInputBorder(
                   //   borderSide: BorderSide(color: Colors.white),)
                 ),
@@ -116,21 +113,29 @@ class CreateAcctScreen extends StatelessWidget {
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(horizontal: 130, vertical: 20),
+
                   elevation: 0,
                 ),
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => PinAuthScreen()),
+                    MaterialPageRoute(builder: (context) => CodeAuthScreen()),
                   );
                 },
-                child: Text(
-                  'Create account',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 19,
-                    fontWeight: FontWeight.bold,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 15,
+                    horizontal: 100,
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Create account',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 19,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
               ),

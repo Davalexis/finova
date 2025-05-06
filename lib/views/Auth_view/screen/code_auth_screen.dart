@@ -1,13 +1,62 @@
+import 'package:finova/providers/auth_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:finova/views/Auth_view/screen/create_pin_Screen.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:pinput/pinput.dart';
 
-class PinAuthScreen extends StatelessWidget {
-  const PinAuthScreen({super.key});
+class CodeAuthScreen extends ConsumerStatefulWidget {
+  const CodeAuthScreen ({super.key});
+
+  @override
+  ConsumerState<CodeAuthScreen> createState() => _CodeAuthScreenState();
+}
+class _CodeAuthScreenState extends ConsumerState<CodeAuthScreen> {
+
+   String otpCode = '';
+
+  //.....
+  void verifyOTP(BuildContext context) async {
+    final verificationId = ref.read(verificationIdProvider);
+    // Assuming otpCode is a 4-digit code entered by the user 
+    if (verificationId == null || otpCode.length != 4) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Incorrect OTP or verificationId")),
+      );
+      return;
+    }
+
+    try {
+      PhoneAuthCredential credential = PhoneAuthProvider.credential(
+        verificationId: verificationId,
+        smsCode: otpCode,
+      );
+
+      await FirebaseAuth.instance.signInWithCredential(credential);
+      
+      // Navigate only on success
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CreatePinScreen(phoneNumber: ''),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Verification failed: ${e.toString()}")),
+      );
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
+
+    final verificationIdProvider = StateProvider<String?>((ref) => null);
+
+
+
     final defaultPinTheme = PinTheme(
       margin: EdgeInsets.all(10),
       padding: EdgeInsets.all(10),
@@ -24,7 +73,11 @@ class PinAuthScreen extends StatelessWidget {
       ),
     );
 
+
+    
+
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -49,7 +102,7 @@ class PinAuthScreen extends StatelessWidget {
                       
                     },
                     icon: Icon(
-                      IconsaxPlusLinear.arrow_right_3,
+                      Icons.headset_mic_rounded,
                        color: Colors.white,
                        size: 30,
                        ),
@@ -69,7 +122,7 @@ class PinAuthScreen extends StatelessWidget {
                   ),
 
                   Text(
-                    'Planoo',
+                    'Finova',
                     style: TextStyle(
                       fontSize: 20,
                       color: Colors.white,
@@ -82,7 +135,7 @@ class PinAuthScreen extends StatelessWidget {
               SizedBox(height: 30),
 
               Padding(
-                padding: const EdgeInsets.only(right: 100),
+                padding: const EdgeInsets.only(right: 90),
                 child: Text(
                   "Enter code sent to you...",
                   style: TextStyle(
@@ -103,12 +156,14 @@ class PinAuthScreen extends StatelessWidget {
                     border: Border.all(color: Colors.greenAccent),
                   ),
                 ),
-                onCompleted: (pin) {},
+                onCompleted: (pin) {
+                   otpCode = pin;
+                },
                 keyboardType: TextInputType.numberWithOptions(),
                 cursor: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Container(width: 22, height: 2, color: Colors.white),
+                    Container(width: 22, height: 2, color: Colors.greenAccent),
 
                    
                   ],
@@ -119,26 +174,29 @@ class PinAuthScreen extends StatelessWidget {
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 130,
-                          vertical: 20,
-                        ),
+                        // padding: EdgeInsets.symmetric(
+                        //   horizontal: 130,
+                        //   vertical: 20,
+                        // ),
                         elevation: 0,
                       ),
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => CreatePinScreen(),
-                          ),
-                        );
+                       verifyOTP(context);
                       },
-                      child: Text(
-                        'Verify',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 19,
-                          fontWeight: FontWeight.bold,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 15,
+                          horizontal: 100,
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Verify',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 19,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                     ),

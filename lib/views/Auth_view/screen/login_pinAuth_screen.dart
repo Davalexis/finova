@@ -1,23 +1,19 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
-import 'package:flutter/material.dart';
+import 'package:finova/providers/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/material.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:pinput/pinput.dart';
-import 'package:finova/providers/auth_provider.dart';
 
-class CreatePinScreen extends ConsumerWidget {
+class LoginPinauthScreen extends ConsumerWidget {
   final String phoneNumber;
-  const CreatePinScreen({
-    required this.phoneNumber,
-  });
+
+  const LoginPinauthScreen({required this.phoneNumber, super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-
-    
+    final _auth = ref.watch(verifyPinControllerProvider.notifier);
     final pinController = ref.watch(pinControllerProvider);
-    final createAcctController = ref.watch(createAccountProvider.notifier);
-    final loading = ref.watch(createAccountProvider);
+    final loading = ref.watch(authControllerProvider);
 
     final defaultPinTheme = PinTheme(
       margin: EdgeInsets.all(10),
@@ -88,11 +84,22 @@ class CreatePinScreen extends ConsumerWidget {
                   ),
                 ],
               ),
+              SizedBox(height: 30),
+
+              Text(
+                "+234 812*****67",
+                style: TextStyle(
+                  fontSize: 25,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.greenAccent,
+                  height: 1,
+                ),
+              ),
 
               SizedBox(height: 30),
 
               Text(
-                "Create a pin for your \naccount",
+                "Enter pin code",
                 style: TextStyle(
                   fontSize: 40,
                   fontWeight: FontWeight.bold,
@@ -104,6 +111,8 @@ class CreatePinScreen extends ConsumerWidget {
               SizedBox(height: 20),
 
               Pinput(
+                controller: pinController,
+                obscureText: true,
                 length: 4,
                 defaultPinTheme: defaultPinTheme,
                 focusedPinTheme: defaultPinTheme.copyWith(
@@ -135,9 +144,9 @@ class CreatePinScreen extends ConsumerWidget {
                 onPressed:
                     loading
                         ? null
-                        : () => createAcctController.createAccountWithPin(
+                        : () => _auth.verifyUserPin(
                           context,
-                           phoneNumber,
+                          phoneNumber,
                           pinController.text,
                         ),
 
@@ -146,7 +155,7 @@ class CreatePinScreen extends ConsumerWidget {
                         ? CircularProgressIndicator()
                         : Center(
                           child: Text(
-                            'Done ',
+                            'Comfirm ',
                             style: TextStyle(
                               color: Colors.black,
                               fontSize: 19,

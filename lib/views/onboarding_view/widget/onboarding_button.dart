@@ -1,4 +1,5 @@
-import 'package:finova/views/Auth_view/screen/create_acct_screen.dart';
+
+import 'package:finova/views/Auth_view/screen/login_screen.dart';
 import 'package:flutter/material.dart';
 
 class OnboardingButton extends StatelessWidget {
@@ -9,18 +10,20 @@ class OnboardingButton extends StatelessWidget {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.white,
-        padding: EdgeInsets.symmetric(horizontal: 130, vertical: 20),
+        padding: EdgeInsets.symmetric(horizontal: 100, vertical: 20),
         elevation: 0,
       ),
       onPressed: () {
-        Navigator.push(context, MaterialPageRoute(builder: (context)=>CreateAcctScreen()));
+        Navigator.push(context, MaterialPageRoute(builder: (context)=>LoginScreen()));
       },
-      child: Text(
-        'Get Started',
-        style: TextStyle(
-          color: Colors.black,
-          fontSize: 19,
-          fontWeight: FontWeight.bold,
+      child: Center(
+        child: Text(
+          'Get Started',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 19,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );
