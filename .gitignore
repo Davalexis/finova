@@ -56,3 +56,4 @@ android/.gradle/
 .idea/
 .vscode/
 
+.env

@@ -1,27 +1,81 @@
-import 'package:finova/providers/auth_provider.dart';
+import 'package:finova/logic/view_models/auth_state.dart';
+import 'package:finova/providers/auth_logic_provider.dart';
 import 'package:finova/views/dashboard_view/Screen/dashboard_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:pinput/pinput.dart';
 
-
-class  ComfirmPinScreen extends ConsumerWidget {
+class ComfirmPinScreen extends ConsumerStatefulWidget {
   final String phoneNumber;
-  final String pin;
-  const ComfirmPinScreen ({
-    super.key, 
-    required this.phoneNumber, 
-    required this.pin
-    });
+  final String firstpin;
+  final String uid;
+  const ComfirmPinScreen({
+    super.key,
+    required this.phoneNumber,
+    required this.firstpin,
+    required this.uid,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ComfirmPinScreen> createState() => _ComfirmPinScreenState();
+}
 
-     final comfirmPinController = ref.watch(pinControllerProvider);
-     final pinNotifier = ref.watch(pinControllerProvider);
+class _ComfirmPinScreenState extends ConsumerState<ComfirmPinScreen> {
+  final _confirmPinController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
+  @override
+  void dispose() {
+    _confirmPinController.dispose();
+    super.dispose();
+  }
 
+  void _createAccountAndSetPin() {
+    if (_formKey.currentState!.validate()) {
+      if (_confirmPinController.text.trim() == widget.firstpin) {
+        ref
+            .read(authLogicProvider.notifier)
+            .createAccountWithPin(
+              pin: widget.firstpin,
+              phoneNumber: widget.phoneNumber,
+              uid: widget.uid,
+              onSuccess: (userModel) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Account created for ${userModel.phoneNumber}!',
+                    ),
+                  ),
+                );
+                // Navigate to home screen, clearing the auth stack
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                    builder: (context) => const DashboardScreen(),
+                  ),
+                  (Route<dynamic> route) => false,
+                );
+              },
+              onError: (message) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error: $message'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              },
+            );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('PINs do not match. Please try again.')),
+        );
+        _confirmPinController.clear(); // Clear the field for re-entry
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final defaultPinTheme = PinTheme(
       margin: EdgeInsets.all(10),
       padding: EdgeInsets.all(10),
@@ -96,95 +150,77 @@ class  ComfirmPinScreen extends ConsumerWidget {
 
               // Padding(
               //   padding: const EdgeInsets.only(right: 110),
-              //   child: 
-               Text(
-                   "Comfirm pin entered \nearlier",
-                  style: TextStyle(
-                    fontSize: 40,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    height: 1,
-                  ),
+              //   child:
+              Text(
+                "Re-enter your 4-digit PIN to confirm.",
+                style: TextStyle(
+                  fontSize: 40,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  height: 1,
                 ),
-              
+              ),
+
               SizedBox(height: 20),
 
               Pinput(
-                controller: comfirmPinController,
                 length: 4,
+                controller: _confirmPinController,
+                obscureText: true,
+                validator: (value) {
+                  if (value == null || value.isEmpty || value.length != 4) {
+                    return 'PIN must be 4 digits';
+                  }
+                  return null;
+                },
+
                 defaultPinTheme: defaultPinTheme,
                 focusedPinTheme: defaultPinTheme.copyWith(
                   decoration: defaultPinTheme.decoration!.copyWith(
                     border: Border.all(color: Colors.greenAccent),
                   ),
                 ),
-                onCompleted: (enteredPin) {
-                  if (enteredPin == pin) {
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => DashboardScreen()));
-
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Pin does not match.')),
-                    );
-                    pinNotifier.clear();
-                  }
-
-              
-                },
+                onCompleted: (enteredPin) {},
                 keyboardType: TextInputType.numberWithOptions(),
                 cursor: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Container(width: 22, height: 2, color: Colors.white),
+                    Container(width: 22, height: 2, color: Colors.greenAccent),
                   ],
                 ),
               ),
               SizedBox(height: 20),
 
-              // Pinput(
-              //   length: 4,
-              //   defaultPinTheme: defaultPinTheme,
-              //   focusedPinTheme: defaultPinTheme.copyWith(
-              //     decoration: defaultPinTheme.decoration!.copyWith(
-              //       border: Border.all(color: Colors.greenAccent),
-              //     ),
-              //   ),
-              //   onCompleted: (pin) {},
-              //   keyboardType: TextInputType.numberWithOptions(),
-              //   cursor: Column(
-              //     mainAxisAlignment: MainAxisAlignment.end,
-              //     children: [
-              //       Container(width: 22, height: 2, color: Colors.white),
-              //     ],
-              //   ),
-              // ),
               Spacer(),
 
               SizedBox(height: 10),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
 
-                  padding: EdgeInsets.symmetric(horizontal: 100, vertical: 15),
-                  elevation: 0,
-                ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => DashboardScreen()),);
-                },
+              if (AuthState is AuthLoading)
+                const CircularProgressIndicator()
+              else
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
 
-                child: Center(
-                  child: Text(
-                    'Done ',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 19,
-                      fontWeight: FontWeight.bold,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 100,
+                      vertical: 15,
+                    ),
+                    elevation: 0,
+                  ),
+                  onPressed: _createAccountAndSetPin,
+
+                  child: Center(
+                    child: Text(
+                      'Done ',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 19,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
-              ),
             ],
           ),
         ),

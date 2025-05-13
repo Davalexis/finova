@@ -1,10 +1,13 @@
+import 'package:finova/logic/view_models/auth_state.dart';
+import 'package:finova/providers/auth_logic_provider.dart';
+import 'package:finova/views/Auth_view/screen/login_pinAuth_screen.dart';
+import 'package:finova/views/Auth_view/screen/otp_auth_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:finova/providers/auth_provider.dart';
 import 'package:finova/views/Auth_view/screen/create_acct_screen.dart';
-// import 'package:finova/views/Auth_view/screen/login_pinAuth_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
+
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -12,12 +15,75 @@ class LoginScreen extends ConsumerStatefulWidget {
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
+
 class _LoginScreenState extends ConsumerState<LoginScreen> {
+  final _phoneController = TextEditingController();
+
+  final _formKey = GlobalKey<FormState>();
+
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    super.dispose();
+  }
+
+  void _sendLoginOtp() {
+    if (_formKey.currentState!.validate()) {
+      // IMPORTANT: Add your country code. Firebase expects E.164 format.
+      final phoneNumberWithCountryCode = "+1${_phoneController.text.trim()}"; // Example: +1 for US
+      // final phoneNumberWithCountryCode = "+91${_phoneController.text.trim()}"; // Example: +91 for India
+
+      ref.read(authLogicProvider.notifier).sendOtp(
+        phoneNumber: phoneNumberWithCountryCode,
+        onCodeSent: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('OTP Sent for login!')),
+          ); Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => OtpAuthScreen(
+                phoneNumber: phoneNumberWithCountryCode,
+                isRegistering: false, // Indicate this is for login flow
+                // No enteredPinForLogin needed here, PIN will be asked on next screen
+              ),
+            ),
+          );
+        },
+        onError: (message) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $message'), backgroundColor: Colors.red),
+          );
+      
+        },
+      
+        onAutoRetrival: (userCredential) {
+          // OTP Auto-retrieved, Firebase sign-in complete.
+          // Navigate directly to PIN entry screen.
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('OTP Auto-retrieved! Please enter your PIN.')),
+          );
+      
+          Navigator.pushReplacement( // Use pushReplacement to avoid back to OTP screen
+            context,
+            MaterialPageRoute(
+              builder: (context) => LoginPinauthScreen(
+                uid: userCredential.user!.uid,
+                // phoneNumber: phoneNumberWithCountryCode, // Optional: can pass if needed on PIN screen
+             ),
+            ),
+          );
+        },
+      );
+    }
+  }
+
+
+
+
+
   @override
   Widget build(BuildContext context) {
-    final phoneController = ref.watch(phoneControllerProvider);
-    final loginViewModel = ref.watch(loginViewModelProvider.notifier);
-    final loginState = ref.watch(loginViewModelProvider);
+     final authState = ref.watch(authLogicProvider);
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -88,7 +154,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               SizedBox(height: 20),
 
               IntlPhoneField(
-                controller: phoneController,
+                controller: _phoneController,
+                
                 keyboardType: TextInputType.phone,
                 style: TextStyle(color: Colors.white),
 
@@ -128,12 +195,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   TextButton(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => CreateAcctScreen(),
-                        ),
-                      );
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => const CreateAcctScreen()),);
                     },
                     child: Text(
                       'click here to sign up ',
@@ -150,6 +214,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               Spacer(),
 
               SizedBox(height: 10),
+               if (authState is AuthLoading)
+                const CircularProgressIndicator()
+              else
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
@@ -157,27 +224,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   padding: EdgeInsets.symmetric(horizontal: 100, vertical: 15),
                   elevation: 0,
                 ),
-                onPressed:
-                    loginState.isLoading
-                        ? null
-                        : () {
-                          final phone = phoneController.text.trim();
-                          loginViewModel.submitPhone(phone, ref, context);
-                        },
+                onPressed: _sendLoginOtp,
 
-                child:
-                    loginState.isLoading
-                        ? CircularProgressIndicator()
-                        : Center(
-                          child: Text(
-                            'Comfirm',
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 19,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
+                child: Text(
+                  'Comfirm',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 19,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           ),

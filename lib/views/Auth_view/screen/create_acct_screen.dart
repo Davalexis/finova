@@ -1,13 +1,92 @@
-import 'package:finova/views/Auth_view/screen/code_Auth_screen.dart';
+import 'package:finova/logic/view_models/auth_state.dart';
+import 'package:finova/providers/auth_logic_provider.dart';
+import 'package:finova/views/Auth_view/screen/create_pin_Screen.dart';
+import 'package:finova/views/Auth_view/screen/login_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:finova/views/Auth_view/screen/otp_auth_screen.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
-class CreateAcctScreen extends StatelessWidget {
+class CreateAcctScreen extends ConsumerStatefulWidget {
   const CreateAcctScreen({super.key});
 
   @override
+  ConsumerState<CreateAcctScreen> createState() => _CreateAcctScreenState();
+}
+
+class _CreateAcctScreenState extends ConsumerState<CreateAcctScreen> {
+  
+  //?
+  final _phoneNumber = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+
+  //?
+  @override
+  void dispose() {
+    _phoneNumber.dispose();
+    super.dispose();
+  }
+
+  //
+  void _sendOtp() {
+    if (_formKey.currentState!.validate()) {
+      final phoneNumberWithCountryCode = "+234${_phoneNumber.text.trim()}";
+
+      ref
+          .read(authLogicProvider.notifier)
+          .sendOtp(
+            phoneNumber: phoneNumberWithCountryCode,
+            //
+            onCodeSent: () {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('OTP Sent')));
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (context) => OtpAuthScreen(
+                        phoneNumber: phoneNumberWithCountryCode,
+                        isRegistering: true,
+                      ),
+                ),
+              );
+            },
+            //
+            onError: (message) {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('Error: $message')));
+            },
+            //
+            onAutoRetrival: (UserCredential) {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('OTP auto-retrieved')));
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (context) => CreatePinScreen(
+                        phoneNumber: phoneNumberWithCountryCode,
+                        uid: UserCredential.user!.uid,
+                      ),
+                ),
+              );
+            },
+          );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    ref.listen(authLogicProvider, (previous, next) {
+      if (next is AuthError && ModalRoute.of(context)?.isCurrent == true) {}
+    });
+
+    final AuthState = ref.watch(authLogicProvider);
     return Scaffold(
       resizeToAvoidBottomInset: false,
       body: SafeArea(
@@ -82,6 +161,7 @@ class CreateAcctScreen extends StatelessWidget {
               const SizedBox(height: 20),
 
               IntlPhoneField(
+                key: _formKey,
                 keyboardType: TextInputType.phone,
                 style: TextStyle(color: Colors.white),
 
@@ -109,6 +189,25 @@ class CreateAcctScreen extends StatelessWidget {
                 dropdownTextStyle: TextStyle(color: Colors.white),
                 invalidNumberMessage: 'Enter a valid Phone number ',
               ),
+
+              SizedBox(height: 10),
+              Row(
+                children: [
+                  Text("Already have an account ?"),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LoginScreen(),
+                        ),
+                      );
+                    },
+                    child: Text('Login'),
+                  ),
+                ],
+              ),
+
               Spacer(),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -116,12 +215,7 @@ class CreateAcctScreen extends StatelessWidget {
 
                   elevation: 0,
                 ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => CodeAuthScreen()),
-                  );
-                },
+                onPressed: _sendOtp,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     vertical: 15,

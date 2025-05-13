@@ -1,24 +1,52 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'package:finova/logic/view_models/auth_state.dart';
+import 'package:finova/views/Auth_view/screen/comfirm_pin_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:pinput/pinput.dart';
-import 'package:finova/providers/auth_provider.dart';
 
-class CreatePinScreen extends ConsumerWidget {
+class CreatePinScreen extends ConsumerStatefulWidget {
+  final String uid;
   final String phoneNumber;
   const CreatePinScreen({
+    super.key,
     required this.phoneNumber,
+    required this.uid,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CreatePinScreen> createState() => _CreatePinScreenState();
+}
 
-    
-    final pinController = ref.watch(pinControllerProvider);
-    final createAcctController = ref.watch(createAccountProvider.notifier);
-    final loading = ref.watch(createAccountProvider);
+class _CreatePinScreenState extends ConsumerState<CreatePinScreen> {
+  final _pinController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
+  @override
+  void dispose() {
+    _pinController.dispose();
+    super.dispose();
+  }
+
+  void _proceedToConfirmPin() {
+    if (_formKey.currentState!.validate()) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => ComfirmPinScreen(
+                uid: widget.uid,
+                phoneNumber: widget.phoneNumber,
+                firstpin: _pinController.text.trim(),
+              ),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final defaultPinTheme = PinTheme(
       margin: EdgeInsets.all(10),
       padding: EdgeInsets.all(10),
@@ -104,8 +132,16 @@ class CreatePinScreen extends ConsumerWidget {
               SizedBox(height: 20),
 
               Pinput(
+                controller: _pinController,
                 length: 4,
                 defaultPinTheme: defaultPinTheme,
+                obscureText: true,
+                validator: (value) {
+                  if (value == null || value.isEmpty || value.length != 4) {
+                    return 'PIN must be 4 digits';
+                  }
+                  return null;
+                },
                 focusedPinTheme: defaultPinTheme.copyWith(
                   decoration: defaultPinTheme.decoration!.copyWith(
                     border: Border.all(color: Colors.greenAccent),
@@ -125,6 +161,9 @@ class CreatePinScreen extends ConsumerWidget {
               Spacer(),
 
               SizedBox(height: 10),
+               if (AuthState is AuthLoading)
+                const CircularProgressIndicator()
+              else
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
@@ -132,28 +171,16 @@ class CreatePinScreen extends ConsumerWidget {
                   padding: EdgeInsets.symmetric(horizontal: 100, vertical: 15),
                   elevation: 0,
                 ),
-                onPressed:
-                    loading
-                        ? null
-                        : () => createAcctController.createAccountWithPin(
-                          context,
-                           phoneNumber,
-                          pinController.text,
-                        ),
+                onPressed: _proceedToConfirmPin,
 
-                child:
-                    loading
-                        ? CircularProgressIndicator()
-                        : Center(
-                          child: Text(
-                            'Done ',
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 19,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
+                child: Text(
+                  'Next ',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 19,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           ),
